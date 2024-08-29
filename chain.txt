@@ -1,0 +1,82 @@
+#include <SFML/Graphics.hpp>
+#include <vector>
+#include <cmath>
+
+using namespace sf;
+using namespace std;
+
+const int width = 800;
+const int height = 600;
+const int numSegments = 5;
+const float segmentLength = 100.0f;
+const Color chainColor = Color(100, 150, 200);
+const Color jointColor = Color::Red;
+
+class Chain {
+public:
+    vector<Vector2f> joints;
+    vector<float> angles;
+    float segmentLength;
+
+    Chain(Vector2f origin, int numSegments, float segmentLength)
+            : segmentLength(segmentLength) {
+        joints.push_back(origin);
+        angles.push_back(0.0f);
+        for (int i = 1; i < numSegments; ++i) {
+            joints.push_back(joints[i - 1] + Vector2f(segmentLength, 0));
+            angles.push_back(0.0f);
+        }
+    }
+
+    void resolve(Vector2f targetPos) {
+        joints[0] = targetPos;
+        for (int i = 1; i < joints.size(); ++i) {
+            Vector2f direction = joints[i] - joints[i - 1];
+            float len = sqrt(direction.x * direction.x + direction.y * direction.y);
+            if (len > 0) {
+                direction /= len;
+            }
+            joints[i] = joints[i - 1] + direction * segmentLength;
+            angles[i] = atan2(direction.y, direction.x);
+        }
+    }
+
+    void draw(RenderWindow& window) {
+        for (size_t i = 1; i < joints.size(); ++i) {
+            Vertex line[] = {
+                    Vertex(joints[i - 1], chainColor),
+                    Vertex(joints[i], chainColor)
+            };
+            window.draw(line, 2, Lines);
+        }
+
+        for (const auto& joint : joints) {
+            CircleShape jointShape(5);
+            jointShape.setFillColor(jointColor);
+            jointShape.setPosition(joint.x - jointShape.getRadius(), joint.y - jointShape.getRadius());
+            window.draw(jointShape);
+        }
+    }
+};
+
+int main() {
+    RenderWindow window(VideoMode(width, height), "Chain Joint System");
+    Chain chain(Vector2f(width / 2, height / 2), numSegments, segmentLength);
+
+    while (window.isOpen()) {
+        Event event;
+        while (window.pollEvent(event)) {
+            if (event.type == Event::Closed)
+                window.close();
+        }
+
+        Vector2f mousePos = (Vector2f)Mouse::getPosition(window);
+        chain.resolve(mousePos);
+
+        window.clear(Color::White);
+        chain.draw(window);
+        window.display();
+    }
+
+    return 0;
+}
