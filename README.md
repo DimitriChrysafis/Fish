@@ -2,7 +2,7 @@
 FISH
 
 <div style="display: flex; justify-content: center;">
-    <img src="demo.gif" width="500">
+    <img src="demo.gif" width="800">
 </div>
 
 <div style="display: flex; justify-content: center;">
